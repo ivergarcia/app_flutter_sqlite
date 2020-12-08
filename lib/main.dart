@@ -34,6 +34,10 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final _formKey = GlobalKey<FormState>();
+  final _controllerName = TextEditingController();
+  final _controllerAddress = TextEditingController();
+  final _controllerPhone = TextEditingController();
+
   Person _person = Person();
   List<Person> _persons = [];
   DatabaseHelper _dbHelper;
@@ -77,18 +81,21 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Column(
             children: <Widget>[
               TextFormField(
+                controller: _controllerName,
                 decoration: InputDecoration(labelText: 'Nombre'),
                 onSaved: (val) => setState(() => _person.name = val),
                 validator: (val) =>
                     (val.length == 0 ? 'Este campo es requerido' : null),
               ),
               TextFormField(
+                controller: _controllerAddress,
                 decoration: InputDecoration(labelText: 'Dirección'),
                 onSaved: (val) => setState(() => _person.address = val),
                 validator: (val) =>
                     (val.length == 0 ? 'Este campo es requerido' : null),
               ),
               TextFormField(
+                controller: _controllerPhone,
                 decoration: InputDecoration(labelText: 'Telefono'),
                 onSaved: (val) => setState(() => _person.phone = val),
                 validator: (val) =>
@@ -123,6 +130,25 @@ class _MyHomePageState extends State<MyHomePage> {
                           color: darkBlueColors, fontWeight: FontWeight.bold),
                     ),
                     subtitle: Text(_persons[index].address.toLowerCase()),
+                    trailing: IconButton(
+                      icon: Icon(
+                        Icons.delete_sweep,
+                        color: darkBlueColors,
+                      ),
+                      onPressed: () async {
+                        await _dbHelper.deletePerson(_persons[index].id);
+                        _resetForm();
+                        _refreshPersonList();
+                      },
+                    ),
+                    onTap: () {
+                      setState(() {
+                        _person = _persons[index];
+                        _controllerName.text = _persons[index].name;
+                        _controllerAddress.text = _persons[index].address;
+                        _controllerPhone.text = _persons[index].phone;
+                      });
+                    },
                   ),
                   Divider(height: 5.0)
                 ],
@@ -137,17 +163,23 @@ class _MyHomePageState extends State<MyHomePage> {
     var form = _formKey.currentState;
     if (form.validate()) {
       form.save();
-      // setState(() {
-      //   _persons.add(Person(
-      //       id: null,
-      //       name: _person.name,
-      //       address: _person.address,
-      //       phone: _person.phone));
-      // });
-      await _dbHelper.insertPerson(_person);
+      if (_person.id == null)
+        await _dbHelper.insertPerson(_person);
+      else
+        await _dbHelper.updatePerson(_person);
       _refreshPersonList();
-      form.reset();
+      _resetForm();
     }
+  }
+
+  _resetForm() {
+    setState(() {
+      _formKey.currentState.reset();
+      _controllerName.clear();
+      _controllerAddress.clear();
+      _controllerPhone.clear();
+      _person.id = null;
+    });
   }
 
   _refreshPersonList() async {

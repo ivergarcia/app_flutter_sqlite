@@ -43,6 +43,18 @@ class DatabaseHelper {
     return await db.insert(Person.tblPerson, person.toMap());
   }
 
+  Future<int> updatePerson(Person person) async {
+    Database db = await database;
+    return await db.update(Person.tblPerson, person.toMap(),
+        where: '${Person.colId} = ?', whereArgs: [person.id]);
+  }
+
+  Future<int> deletePerson(int id) async {
+    Database db = await database;
+    return await db.delete(Person.tblPerson,
+        where: '${Person.colId} = ?', whereArgs: [id]);
+  }
+
   Future<List<Person>> fetchPersons() async {
     Database db = await database;
     List<Map> persons = await db.query(Person.tblPerson);
